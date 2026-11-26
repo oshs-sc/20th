@@ -1,8 +1,21 @@
 // Shared safeguards for private backup restoration; no student account provisioning.
 import { realpath, lstat } from 'node:fs/promises';
-import { dirname, resolve, relative, isAbsolute, sep } from 'node:path';
+import { existsSync } from 'node:fs';
+import { dirname, join, resolve, relative, isAbsolute, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-const sourceRoot = fileURLToPath(new URL('../../', import.meta.url));
+const applicationRoot = fileURLToPath(new URL('../../', import.meta.url));
+// An event may live below a shared repository root. Keep private outputs outside
+// the whole checkout, including when .git is a worktree file rather than a directory.
+function repositoryRoot(start) {
+  let current = resolve(start);
+  while (true) {
+    if (existsSync(join(current, '.git'))) return current;
+    const parent = dirname(current);
+    if (parent === current) return applicationRoot;
+    current = parent;
+  }
+}
+const sourceRoot = repositoryRoot(applicationRoot);
 
 export async function processRows(rows, concurrency, work, onResult) {
   if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 10)

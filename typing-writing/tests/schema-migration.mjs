@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { fileURLToPath } from 'node:url';
+import { outsideSource } from '../db/scripts/private-files.mjs';
 import {
   applyComponent,
   backupFromDocuments,
@@ -11,6 +13,11 @@ import {
   prepareRows,
 } from '../db/scripts/migrate-schema.mjs';
 import { restoreBackup, validateBackup } from '../db/scripts/restore-backup.mjs';
+
+// Moving an event under a shared checkout must not permit private backups in
+// the repository root or in another event's folder.
+for (const path of ['../../private-backup.json', '../../other-event/private-backup.json', '../private-backup.json'])
+  assert.throws(() => outsideSource(fileURLToPath(new URL(path, import.meta.url))), /PRIVATE_FILE_MUST_BE_OUTSIDE_REPOSITORY/);
 
 const project='demo-migration';
 const base=`projects/${project}/databases/(default)/documents`;
