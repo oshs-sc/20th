@@ -1,8 +1,11 @@
 // Desktop-only relocation smoke test for the event bundle under /typing-writing/.
-// Run the root server on 127.0.0.1:5177 first. Firebase adapters are replaced
+// Serve the repository root on 127.0.0.1:5177 first. Firebase adapters are replaced
 // in-browser with test-only values; no Firebase project or production records are used.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const { resolve } = require('node:path');
+const repositoryRoot = resolve(__dirname, '../..');
+assert.deepEqual(fs.readdirSync(repositoryRoot).filter(name => name !== '.git').sort(), ['README.md', 'index.html', 'typing-writing']);
 const { chromium } = require('playwright');
 
 const base = process.env.SITE_LAYOUT_BASE || 'http://127.0.0.1:5177';
@@ -93,14 +96,12 @@ async function pageWithMocks(browser, errors = []) {
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
   const pageErrors = [];
   try {
-    // Root project hub links to the relocated event bundle and the existing rental service.
+    // Preserve the user's own root HTML; no added event hub or redirect files.
     const hub = await browser.newPage({ viewport: { width: 1366, height: 768 } });
     hub.on('pageerror', error => pageErrors.push(error.message));
     await hub.goto(base + '/');
-    assert.equal(await hub.locator('a.project').count(), 2);
-    assert.equal(await hub.locator('a.project').nth(0).getAttribute('href'), './typing-writing/');
-    assert.equal(await hub.locator('a.project').nth(1).getAttribute('href'), 'https://coshsc.kr/rental/');
-    await hub.screenshot({ path: `${out}/root-hub-desktop.png`, animations: 'disabled' });
+    await hub.getByRole('heading', { name: '천안오성고등학교 20대 학생회', exact: true }).waitFor();
+    await hub.screenshot({ path: `${out}/root-desktop.png`, animations: 'disabled' });
 
     // Confirm the moved event landing page and its relative mascot asset resolve from the new base.
     await hub.goto(base + '/typing-writing/');
@@ -118,28 +119,9 @@ async function pageWithMocks(browser, errors = []) {
     await hub.screenshot({ path: `${out}/event-landing-desktop.png`, animations: 'disabled' });
     await hub.close();
 
-    // All legacy aliases retain both the query and URL fragment through the redirect.
-    const aliases = [
-      ['/typing/', '/typing-writing/typing/'],
-      ['/typing/admin/', '/typing-writing/typing/admin/'],
-      ['/write/', '/typing-writing/write/'],
-      ['/write/admin/', '/typing-writing/write/admin/'],
-      ['/welcome/', '/typing-writing/welcome/'],
-      ['/welcome/admin/', '/typing-writing/welcome/admin/'],
-    ];
-    for (const [legacy, destination] of aliases) {
-      const page = await pageWithMocks(browser, pageErrors);
-      const search = '?layoutCheck=1&from=legacy%2Fpath';
-      const hash = '#letter=layout-check';
-      await page.goto(`${base}${legacy}${search}${hash}`);
-      await page.waitForFunction(({ pathname, query, fragment }) =>
-        location.pathname === pathname && location.search === query && location.hash === fragment,
-      { pathname: destination, query: search, fragment: hash }, { timeout: 10000 });
-      assert.equal(new URL(page.url()).pathname, destination, `${legacy} destination`);
-      assert.equal(new URL(page.url()).search, search, `${legacy} query`);
-      assert.equal(new URL(page.url()).hash, hash, `${legacy} fragment`);
-      await page.close();
-    }
+    // Removed legacy routes stay absent instead of redirecting elsewhere.
+    const removedPaths = ['/typing/', '/typing/admin/', '/write/', '/write/admin/', '/welcome/', '/welcome/admin/', '/redirect.js', '/style.css', '/serve.mjs'];
+    for (const path of removedPaths) assert.equal((await fetch(base + path)).status, 404, path);
 
     // Run the real relocated typing UI/engine with only Firebase reads and writes mocked.
     const typing = await pageWithMocks(browser, pageErrors);
@@ -251,8 +233,8 @@ async function pageWithMocks(browser, errors = []) {
 
     assert.deepEqual(pageErrors, [], `browser page errors: ${pageErrors.join('; ')}`);
     console.log(JSON.stringify({
-      base, desktopOnly: true, aliases: aliases.length,
-      checked: ['root hub links', 'nested event assets', 'typing login', 'IME composition and saved result',
+      base, desktopOnly: true, removedLegacyPaths: removedPaths.length,
+      checked: ['minimal root and user HTML', 'nested event assets', 'typing login', 'IME composition and saved result',
         'returning certificate read-only flow', 'writing content counter', 'unauthenticated nested admin navigation'],
       firebase: 'isolated browser mocks only; no production reads/writes',
       screenshots: out,

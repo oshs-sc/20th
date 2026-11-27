@@ -12,7 +12,8 @@ node serve.mjs 5176
 - 배포 주소: `/typing-writing/typing/`, `/typing-writing/write/`, `/typing-writing/welcome/`
 - 위 로컬 서버에서는 행사 폴더를 루트로 사용하므로 `/typing/`, `/write/`, `/welcome/`로 접속합니다.
 - 관리자 배포 주소: `/typing-writing/typing/admin/`, `/typing-writing/write/admin/`, `/typing-writing/welcome/admin/`
-- 저장소: `oshs-sc/20th`. Pages는 `main`의 저장소 루트를 배포하고, 이 행사는 `typing-writing/`에서 서비스합니다. 작업 브랜치에서 검증한 뒤 `main`에 반영합니다. 배포 설정과 전체 로컬 실행은 [루트 README](../README.md)를 참고합니다.
+- 저장소: `oshs-sc/20th`. Pages는 `main`의 저장소 루트를 배포하고, 이 행사는 `typing-writing/`에서 서비스합니다. 작업 브랜치에서 검증한 뒤 `main`에 반영합니다.
+- 저장소 루트에는 행사 폴더, `README.md`, `index.html`만 둡니다. 예전 `/typing/`, `/write/`, `/welcome/` 연결 페이지는 제공하지 않습니다.
 - Firebase 프로젝트: `os20th`, 기본 STANDARD 데이터베이스, 서울 리전.
 - `?emulator=1`은 localhost/127.0.0.1에서만 작동합니다. Auth 9098, Firestore 8088을 사용하며 프로젝트는 `demo-ohsung`입니다.
 
@@ -97,3 +98,14 @@ node db/scripts/restore-backup.mjs --input PRIVATE_BACKUP.json --project os20th 
 - 실제 참가자의 본인 여부와 공식 순위·상품 지급은 현장에서 운영진이 확인합니다.
 
 모바일 테스트는 현재 요청 범위에서 제외합니다. 데스크톱 회귀 검사와 실제 Firestore·Auth 에뮬레이터의 접수·삭제·공개·복원·권한 검사를 사용합니다.
+
+## 전체 사이트 경로 확인
+
+저장소 루트에서 임시 정적 서버를 실행하면 실제 배포와 같은 `/typing-writing/` 경로를 확인할 수 있습니다.
+
+```sh
+python3 -m http.server 5177 --bind 127.0.0.1
+node typing-writing/tests/site-layout-desktop.cjs
+```
+
+데스크톱 검사는 Playwright와 Chrome이 필요하며, Firebase 연결은 테스트용 어댑터로 대체합니다.
