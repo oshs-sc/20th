@@ -12,7 +12,7 @@ node serve.mjs 5176
 - 배포 주소: `/typing-writing/typing/`, `/typing-writing/write/`, `/typing-writing/welcome/`
 - 위 로컬 서버에서는 행사 폴더를 루트로 사용하므로 `/typing/`, `/write/`, `/welcome/`로 접속합니다.
 - 관리자 배포 주소: `/typing-writing/typing/admin/`, `/typing-writing/write/admin/`, `/typing-writing/welcome/admin/`
-- 저장소: `oshs-sc/20th`. Pages는 `main`의 저장소 루트를 배포하고, 이 행사는 `typing-writing/`에서 서비스합니다. 작업 브랜치에서 검증한 뒤 `main`에 반영합니다.
+- 저장소: `oshs-sc/20th`. 소스는 `main`에서 관리하고, 이 행사는 `typing-writing/`에서 서비스합니다. 작업 브랜치에서 검증한 뒤 `main`에 반영합니다.
 - 저장소 루트에는 행사 폴더, `README.md`, `index.html`만 둡니다. 예전 `/typing/`, `/write/`, `/welcome/` 연결 페이지는 제공하지 않습니다.
 - Firebase 프로젝트: `os20th`, 기본 STANDARD 데이터베이스, 서울 리전.
 - `?emulator=1`은 localhost/127.0.0.1에서만 작동합니다. Auth 9098, Firestore 8088을 사용하며 프로젝트는 `demo-ohsung`입니다.
@@ -100,6 +100,19 @@ node db/scripts/restore-backup.mjs --input PRIVATE_BACKUP.json --project os20th 
 모바일 테스트는 현재 요청 범위에서 제외합니다. 데스크톱 회귀 검사와 실제 Firestore·Auth 에뮬레이터의 접수·삭제·공개·복원·권한 검사를 사용합니다.
 
 ## 전체 사이트 경로 확인
+
+### 배포
+
+`main` 루트는 행사 폴더·README·HTML만 유지합니다. GitHub Pages는 `gh-pages` 브랜치를 배포하며, `CNAME`과 `.nojekyll`은 배포 브랜치 루트에만 복사합니다. `20th.coshsc.kr` 도메인은 유지합니다.
+
+`main`에 푸시한 다음 저장소 루트에서 실행합니다. 배포 도구는 원격 `main`의 커밋을 사용하며 소스 작업 파일은 변경하지 않습니다. Node.js와 Git 원격 푸시 권한이 필요합니다.
+
+```sh
+node typing-writing/deploy-pages.mjs --dry-run
+node typing-writing/deploy-pages.mjs
+```
+
+### 로컬 검증
 
 저장소 루트에서 임시 정적 서버를 실행하면 실제 배포와 같은 `/typing-writing/` 경로를 확인할 수 있습니다.
 

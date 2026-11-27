@@ -20,6 +20,7 @@
 !/common.js
 !/style.css
 !/serve.mjs
+!/deploy-pages.mjs
 !/404.html
 !/index.html
 !/.nojekyll
