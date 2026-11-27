@@ -7,8 +7,11 @@ import { fileURLToPath } from 'node:url';
 
 const options = process.argv.slice(2);
 if (options.some(value => value !== '--dry-run')) throw new Error('Use --dry-run or no arguments.');
+const repositoryRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], {
+  cwd: dirname(fileURLToPath(import.meta.url)), encoding: 'utf8',
+}).trim();
 const git = (args, env = process.env) => execFileSync('git', args, {
-  cwd: dirname(fileURLToPath(import.meta.url)), env, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'],
+  cwd: repositoryRoot, env, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'],
 }).trim();
 
 git(['fetch', 'origin', 'main']);
